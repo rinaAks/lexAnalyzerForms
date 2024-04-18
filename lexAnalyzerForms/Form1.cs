@@ -19,7 +19,7 @@ namespace lexAnalyzerForms
             State currentState = State.S;
             while (true)
             {
-                if(currentState == State.S)
+                if (currentState == State.S)
                 {
                     if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
                     {
@@ -52,9 +52,19 @@ namespace lexAnalyzerForms
                         if (inputStr[pos] == '\n') output += "распознано enter";
                         currentState = State.F;
                     }
+                    else if (inputStr[pos] == '<')
+                    {
+                        output += "Распознан <";
+                        currentState = State.R;
+                    }
+                    else if (inputStr[pos] == '>')
+                    {
+                        output += "Распознан >";
+                        currentState = State.R;
+                    }
                 }
-                
-                if (currentState == State.I) { 
+
+                if (currentState == State.I) {
                     if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
                     {
                         output += inputStr[pos].ToString();
@@ -65,7 +75,8 @@ namespace lexAnalyzerForms
                     {
                         output += inputStr[pos].ToString();
                     }
-                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
+                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']'
+                         || inputStr[pos] == ':' || inputStr[pos] == '(' || inputStr[pos] == ')'
                         || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == ' '
                         || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
                         || inputStr[pos] == '|' || inputStr[pos] == '^')
@@ -75,17 +86,18 @@ namespace lexAnalyzerForms
                         //output += inputStr[pos].ToString();
                         output += "\nРаспознан знак или служебное слово";
                     }
-                    else if(inputStr[pos] == '.') { currentState = State.F; output += "\nОшибка"; }
-                    else if(inputStr[pos] != '"')
+                    else if (inputStr[pos] == '.') { currentState = State.F; output += "\nОшибка"; }
+                    else if (inputStr[pos] != ';')
                     {
                         currentState = State.F;
                         output += "\nОшибка";
                     }
                 }
 
-                if(currentState == State.C)
+                if (currentState == State.C)
                 {
-                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    if ((inputStr[pos] >= 'a' && inputStr[pos] <= 'z') || inputStr[pos] == ':' ||
+                        inputStr[pos] == '{' || inputStr[pos] == '[' || inputStr[pos] == '(')
                     {
                         currentState = State.F;
                         output += "\nОшибка";
@@ -109,9 +121,106 @@ namespace lexAnalyzerForms
                         currentState = State.F;
                         output += "\nРаспознано целое число";
                     }
+                    else if (inputStr[pos] == '.') 
+                    {
+                        //ещё не сделано
+                    }
+
                 }
 
-                if (inputStr[pos] == '"')
+
+                //DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+                if (currentState == State.D)
+                {
+                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                    else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                    {
+                        output += '.' + inputStr[pos].ToString();
+                        currentState = State.E;
+                    }
+                    else
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                }
+
+                // EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+                if (currentState == State.E)
+                {
+                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                    else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                    {
+                        output += inputStr[pos].ToString();
+                    }
+                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
+                         inputStr[pos] == ')'
+                        || inputStr[pos] == '}' || inputStr[pos] == ' '
+                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
+                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    {
+                        pos = pos - 1;
+                        currentState = State.F;
+                        output += "\nРаспознано целое число";
+                    }
+                    else if (inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    {
+                        output += "\nРаспознано вещественное число";
+                        currentState = State.F;
+                    }
+                }
+
+                if (currentState == State.R)
+                {
+                    if(inputStr[pos] == '=')
+                    {
+                        currentState = State.F;
+                        output += "\nРаспознан оператор := или !=";
+                    }
+                    else
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                }
+
+                    if (currentState == State.R) 
+                {
+                    if ((inputStr[pos] >= 'a' && inputStr[pos] <= 'z') 
+                        || (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                        || inputStr[pos] == '-' ||
+                        inputStr[pos] == '(' || inputStr[pos] == ' ')
+                    {
+                        pos = pos - 1;
+                        currentState = State.F;
+                        output += "\nРаспознан знак сравнени < или >";
+                    }
+                    if (inputStr[pos] == '=')
+                    {
+                        currentState = State.F;
+                        output += "\nРаспознан строгий знак сравнени <= или >=";
+                    }
+                    else if (inputStr[pos] == '+' || inputStr[pos] == '.' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']'
+                         || inputStr[pos] == ':' || inputStr[pos] == ')'
+                        || inputStr[pos] == '{' || inputStr[pos] == '}' 
+                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '!'
+                        || inputStr[pos] == '|' || inputStr[pos] == '^' || inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                }
+
+
+                if (inputStr[pos] == ';')
                 {
                     currentState = State.F;
                 }
