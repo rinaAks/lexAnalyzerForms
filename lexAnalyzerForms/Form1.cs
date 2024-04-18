@@ -19,52 +19,98 @@ namespace lexAnalyzerForms
             State currentState = State.S;
             while (true)
             {
-                if (currentState == State.S && inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                if(currentState == State.S)
                 {
-                    output = inputStr[pos].ToString();
-                    currentState = State.I;
-                    pos = pos + 1;
-                }
-                if (currentState == State.S && (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
-                    || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == '=' || inputStr[pos] == '|') || inputStr[pos] == '^' || inputStr[pos] == ';' || inputStr[pos] == '\n')
-                {
-                    if (inputStr[pos] == '+') output += "распознано сложение";
-                    if (inputStr[pos] == '-') output += "распознано вычитание";
-                    if (inputStr[pos] == '*') output += "распознано умножение";
-                    if (inputStr[pos] == '[') output += "распознано [";
-                    if (inputStr[pos] == ']') output += "распознано ]";
-                    if (inputStr[pos] == '(') output += "распознано (";
-                    if (inputStr[pos] == ')') output += "распознано )";
-                    if (inputStr[pos] == '{') output += "распознано {";
-                    if (inputStr[pos] == '}') output += "распознано }";
-                    if (inputStr[pos] == '=') output += "распознано =";
-                    if (inputStr[pos] == '|') output += "распознано |";
-                    if (inputStr[pos] == '^') output += "распознано ^";
-                    if (inputStr[pos] == ';') output += "распознано ;";
-                    if (inputStr[pos] == '\n') output += "распознано enter";
-                    currentState = State.F;
+                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    {
+                        output = inputStr[pos].ToString();
+                        currentState = State.I;
+                        pos = pos + 1;
+                    }
+                    else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                    {
+                        //output += inputStr[pos].ToString();
+                        currentState = State.C;
+                    }
+                    else if ((inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
+                        || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == '=' || inputStr[pos] == '|') || inputStr[pos] == '^' || inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    {
+                        output += '\n';
+                        if (inputStr[pos] == '+') output += "распознано сложение";
+                        if (inputStr[pos] == '-') output += "распознано вычитание";
+                        if (inputStr[pos] == '*') output += "распознано умножение";
+                        if (inputStr[pos] == '[') output += "распознано [";
+                        if (inputStr[pos] == ']') output += "распознано ]";
+                        if (inputStr[pos] == '(') output += "распознано (";
+                        if (inputStr[pos] == ')') output += "распознано )";
+                        if (inputStr[pos] == '{') output += "распознано {";
+                        if (inputStr[pos] == '}') output += "распознано }";
+                        if (inputStr[pos] == '=') output += "распознано =";
+                        if (inputStr[pos] == '|') output += "распознано |";
+                        if (inputStr[pos] == '^') output += "распознано ^";
+                        if (inputStr[pos] == ';') output += "распознано ;";
+                        if (inputStr[pos] == '\n') output += "распознано enter";
+                        currentState = State.F;
+                    }
                 }
                 
-                if (currentState == State.I && inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
-                {
-                    output += inputStr[pos].ToString();
-                    //currentState = State.I;
-                    //pos = pos + 1;
+                if (currentState == State.I) { 
+                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    {
+                        output += inputStr[pos].ToString();
+                        //currentState = State.I;
+                        //pos = pos + 1;
+                    }
+                    else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                    {
+                        output += inputStr[pos].ToString();
+                    }
+                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
+                        || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == ' '
+                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
+                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    {
+                        pos = pos - 1;
+                        currentState = State.F;
+                        //output += inputStr[pos].ToString();
+                        output += "\nРаспознан знак или служебное слово";
+                    }
+                    else if(inputStr[pos] == '.') { currentState = State.F; output += "\nОшибка"; }
+                    else if(inputStr[pos] != '"')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
                 }
-                if (currentState == State.I && inputStr[pos] >= '0' && inputStr[pos] <= '9')
+
+                if(currentState == State.C)
                 {
-                    output += inputStr[pos].ToString();
+                    if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                    else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                    {
+                        output += inputStr[pos].ToString();
+                    }
+                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
+                        inputStr[pos] == ']' || inputStr[pos] == ')'
+                        || inputStr[pos] == '}' || inputStr[pos] == ' '
+                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
+                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    {
+                        pos = pos - 1;
+                        currentState = State.F;
+                        output += "\nРаспознано целое число";
+                    }
+                    else if(inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    {
+                        currentState = State.F;
+                        output += "\nРаспознано целое число";
+                    }
                 }
-                if (currentState == State.I && (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
-                    || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == ' '
-                    || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
-                    || inputStr[pos] == '|' || inputStr[pos] == '^'))
-                {
-                    pos = pos - 1;
-                    currentState = State.F;
-                    //output += inputStr[pos].ToString();
-                    output += "Распознана лексема; поиск служебного слова";
-                }
+
                 if (inputStr[pos] == '"')
                 {
                     currentState = State.F;
