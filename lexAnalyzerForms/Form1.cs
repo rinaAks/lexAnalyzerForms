@@ -56,11 +56,25 @@ namespace lexAnalyzerForms
                     {
                         output += "Распознан <";
                         currentState = State.R;
+                        pos = pos + 1;
                     }
                     else if (inputStr[pos] == '>')
                     {
                         output += "Распознан >";
                         currentState = State.R;
+                        pos = pos + 1;
+                    }
+                    else if (inputStr[pos] == ':')
+                    {
+                        output += "Распознан :";
+                        currentState = State.B;
+                        pos = pos + 1;
+                    }
+                    else if (inputStr[pos] == '/')
+                    {
+                        output += "Распознан /";
+                        currentState = State.K;
+                        pos = pos + 1;
                     }
                 }
 
@@ -123,7 +137,8 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] == '.') 
                     {
-                        //ещё не сделано
+                        currentState = State.D;
+                        pos = pos + 1;
                     }
 
                 }
@@ -139,7 +154,7 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
-                        output += '.' + inputStr[pos].ToString();
+                        output += '.';
                         currentState = State.E;
                     }
                     else
@@ -178,21 +193,8 @@ namespace lexAnalyzerForms
                     }
                 }
 
-                if (currentState == State.R)
-                {
-                    if(inputStr[pos] == '=')
-                    {
-                        currentState = State.F;
-                        output += "\nРаспознан оператор := или !=";
-                    }
-                    else
-                    {
-                        currentState = State.F;
-                        output += "\nОшибка";
-                    }
-                }
 
-                    if (currentState == State.R) 
+                if (currentState == State.R) 
                 {
                     if ((inputStr[pos] >= 'a' && inputStr[pos] <= 'z') 
                         || (inputStr[pos] >= '0' && inputStr[pos] <= '9')
@@ -201,7 +203,7 @@ namespace lexAnalyzerForms
                     {
                         pos = pos - 1;
                         currentState = State.F;
-                        output += "\nРаспознан знак сравнени < или >";
+                        output += "\nРаспознан знак сравнения < или >";
                     }
                     if (inputStr[pos] == '=')
                     {
@@ -218,6 +220,92 @@ namespace lexAnalyzerForms
                         output += "\nОшибка";
                     }
                 }
+
+                if (currentState == State.B)
+                {
+                    if (inputStr[pos] == '=')
+                    {
+                        currentState = State.F;
+                        output += "\nРаспознан оператор := или !=";
+                    }
+                    else
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                }
+
+
+                // работа с символом /  KKKKKKKKKKKKKK
+                if (currentState == State.K)
+                {
+                    if ((inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
+                        || (inputStr[pos] >= '0' && inputStr[pos] <= '9')
+                        || inputStr[pos] == '(' || inputStr[pos] == ' ')
+                    {
+                        pos = pos - 1;
+                        currentState = State.F;
+                        output += "\nРаспознан знак деления /";
+                    }
+                    if (inputStr[pos] == '*')
+                    {
+                        currentState = State.O;
+                        output += "\nРаспознан знак /*";
+                    }
+                    else
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                }
+
+                // работа с комментарием /  OOOOOOOOOOO
+                if (currentState == State.O)
+                {
+
+                    if (inputStr[pos] == '*')
+                    {
+                        currentState = State.M;
+                        output += "\nРаспознан знак *";
+                    }
+                    else if (inputStr[pos] == ';')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                    else
+                    {
+                        output += inputStr[pos];
+
+                    }
+                }
+
+                // работа с комментарием /  MMMMMMMMMMMMMMMMMM
+                if (currentState == State.M)
+                {
+
+                    if (inputStr[pos] == '*')
+                    {
+                        currentState = State.M;
+                        output += "\nРаспознан знак *";
+                    }
+                    else if (inputStr[pos] == ';')
+                    {
+                        currentState = State.F;
+                        output += "\nОшибка";
+                    }
+                    else if (inputStr[pos] == '/')
+                    {
+                        currentState = State.S;
+                        output += "\nРаспознан знак */";
+                    }
+                    else
+                    {
+                        output += inputStr[pos];
+                        //currentState = State.O;
+                    }
+                }
+
 
 
                 if (inputStr[pos] == ';')
