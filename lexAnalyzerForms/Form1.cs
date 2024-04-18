@@ -1,5 +1,9 @@
 namespace lexAnalyzerForms
 {
+    //вещественные и целые числа хранятся в нужном формате, не string
+    //создать структуру, которая хранит лексемы, тип лексемы и значение
+    //служебные слова
+
     public partial class Form1 : Form
     {
         public Form1()
@@ -72,8 +76,14 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] == '/')
                     {
-                        output += "Распознан /";
+                        //output += "Распознан /";
                         currentState = State.K;
+                        pos = pos + 1;
+                    }
+                    else if (inputStr[pos] == '!')
+                    {
+                        output += "Распознан !";
+                        currentState = State.B;
                         pos = pos + 1;
                     }
                 }
@@ -175,6 +185,7 @@ namespace lexAnalyzerForms
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
                         output += inputStr[pos].ToString();
+                        string a = "5";
                     }
                     else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
                          inputStr[pos] == ')'
@@ -251,6 +262,8 @@ namespace lexAnalyzerForms
                     {
                         currentState = State.O;
                         output += "\nРаспознан знак /*";
+                        pos = pos + 1;
+                        output += "\n";
                     }
                     else
                     {
@@ -267,6 +280,7 @@ namespace lexAnalyzerForms
                     {
                         currentState = State.M;
                         output += "\nРаспознан знак *";
+                        pos = pos + 1;
                     }
                     else if (inputStr[pos] == ';')
                     {
@@ -331,7 +345,7 @@ namespace lexAnalyzerForms
                 tbOutput.Text += scanLex(inputText, position) + "    position: " + position.ToString() + '\n';
                 if(position < inputText.Length - 1)
                     position = position + 1;
-            }        
+            }
         }
     }
 }
