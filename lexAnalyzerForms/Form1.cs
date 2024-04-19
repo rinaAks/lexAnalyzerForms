@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace lexAnalyzerForms
 {
     //вещественные и целые числа хранятся в нужном формате, не string
@@ -10,6 +12,45 @@ namespace lexAnalyzerForms
         {
             InitializeComponent();
         }
+
+        public class Lexems
+        {
+            public string Type { get; set; }
+            public string Name { get; set; }
+            public object Value { get; set; }
+
+            public void addToStorage(string type, string name, object value)
+            {
+                Type = type;
+                Name = name;
+                Value = value;
+            }
+            public void addType(string type)
+            {
+                Type = type;
+            }
+            public void addName(string name)
+            {
+                Name = name;
+            }
+            public void addValue(string value)
+            {
+                Value = value;
+            }
+            /*public Lexems(string type, string name, object value)
+            {
+                Type = type;
+                Name = name;
+                Value = value;
+            }*/
+            public Lexems()
+            {
+                Type = "";
+                Name = "";
+                Value = "";
+            }
+        }
+
         enum State
         {
             S, I, C, D, E,
@@ -17,17 +58,43 @@ namespace lexAnalyzerForms
             L, F
         }
         string inputText, outputText;
+
+
+        string tempForWords = ""; Boolean tempForWordsFlag = false; int wordsCounter = 0;
+        Boolean savedValueFlag = false;
         public string scanLex(string inputStr, int pos) 
         {
-            string output = "";
+            string output = ""; 
             State currentState = State.S;
             while (true)
             {
                 if (currentState == State.S)
                 {
+                    if(tempForWords != "" && tempForWordsFlag == true)
+                    {
+                        if(tempForWords == "int")
+                        {
+                            wordsCounter += 1;
+                            LexemStorage[wordsCounter - 1].addType("int");
+                        }
+                        else if(tempForWords == "decimal")
+                        {
+                            wordsCounter += 1;
+                            LexemStorage[wordsCounter - 1].addType("decimal");
+                        }
+                        else
+                        {
+                            if (LexemStorage[wordsCounter - 1].Type == "int" || LexemStorage[wordsCounter - 1].Type == "decimal")
+                            {
+                                LexemStorage[wordsCounter - 1].addName(tempForWords);
+                            }
+                        }
+                        tempForWords = ""; tempForWordsFlag = false;
+                    }
                     if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
                     {
                         output = inputStr[pos].ToString();
+                        tempForWords = inputStr[pos].ToString();
                         currentState = State.I;
                         pos = pos + 1;
                     }
@@ -64,13 +131,13 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] == '>')
                     {
-                        output += "Распознан >";
+                        //output += "Распознан >";
                         currentState = State.R;
                         pos = pos + 1;
                     }
                     else if (inputStr[pos] == ':')
                     {
-                        output += "Распознан :";
+                        //output += "Распознан :";
                         currentState = State.B;
                         pos = pos + 1;
                     }
@@ -82,7 +149,7 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] == '!')
                     {
-                        output += "Распознан !";
+                        //output += "Распознан !";
                         currentState = State.B;
                         pos = pos + 1;
                     }
@@ -91,13 +158,24 @@ namespace lexAnalyzerForms
                 if (currentState == State.I) {
                     if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
                     {
+                        /*if (inputStr.Length - 1-pos > 1)
+                        {
+                            if ((inputStr[pos-1] == 'i') && (inputStr[pos] == 'n') 
+                                && (inputStr[pos + 1] == 't'))
+                            {
+                                output += "\nint распознан";
+                                pos += 2;
+                            }
+                        }*/
                         output += inputStr[pos].ToString();
+                        tempForWords += inputStr[pos].ToString();
                         //currentState = State.I;
                         //pos = pos + 1;
                     }
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
                         output += inputStr[pos].ToString();
+                        tempForWords += inputStr[pos].ToString();
                     }
                     else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']'
                          || inputStr[pos] == ':' || inputStr[pos] == '(' || inputStr[pos] == ')'
@@ -107,6 +185,7 @@ namespace lexAnalyzerForms
                     {
                         pos = pos - 1;
                         currentState = State.F;
+                        tempForWordsFlag = true; LexemStorage.Add(new Lexems()); 
                         //output += inputStr[pos].ToString();
                         output += "\nРаспознан знак или служебное слово";
                     }
@@ -129,6 +208,7 @@ namespace lexAnalyzerForms
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
                         output += inputStr[pos].ToString();
+                        tempForWords += inputStr[pos].ToString();
                     }
                     else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
                         inputStr[pos] == ']' || inputStr[pos] == ')'
@@ -138,6 +218,11 @@ namespace lexAnalyzerForms
                     {
                         pos = pos - 1;
                         currentState = State.F;
+                        if(LexemStorage[wordsCounter - 1].Name != "" )
+                        {
+                            output += "\nAAAAAAAAAAAAA";
+                            LexemStorage[wordsCounter - 1].addValue(tempForWords);
+                        }
                         output += "\nРаспознано целое число";
                     }
                     else if(inputStr[pos] == ';' || inputStr[pos] == '\n')
@@ -336,6 +421,7 @@ namespace lexAnalyzerForms
             return output;
         }
         public static int position = 0;
+        public List<Lexems> LexemStorage = new List<Lexems>();
         private void button1_Click(object sender, EventArgs e)
         {
             position = 0;
@@ -345,6 +431,11 @@ namespace lexAnalyzerForms
                 tbOutput.Text += scanLex(inputText, position) + "    position: " + position.ToString() + '\n';
                 if(position < inputText.Length - 1)
                     position = position + 1;
+            }
+            tbOutput.Text += "\nСПИСОК ПЕРЕМЕННЫХ";
+            for (int i = 0; i < LexemStorage.Count-1; i++)
+            {
+                tbOutput.Text += "\n" + LexemStorage[i].Type + " " + LexemStorage[i].Name + " = " + LexemStorage[i].Value;
             }
         }
     }
