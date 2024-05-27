@@ -33,7 +33,7 @@ namespace lexAnalyzerForms
             {
                 Name = name;
             }
-            public void addValue(string value)
+            public void addValue(object value)
             {
                 Value = value;
             }
@@ -51,7 +51,7 @@ namespace lexAnalyzerForms
             }
         }
 
-        enum State
+        public enum State
         {
             S, I, C, D, E,
             R, B, K, O, M,
@@ -59,9 +59,83 @@ namespace lexAnalyzerForms
         }
         string inputText, outputText;
 
+        double intBeforeDotNum = 0.0;
+        int iterDouble = 0;
 
-        string tempForWords = ""; Boolean tempForWordsFlag = false; int wordsCounter = 0;
-        Boolean savedValueFlag = false;
+        string tempForWords = "", tempForDecWords = ""; Boolean tempForWordsFlag = false; int wordsCounter = 0;
+        Boolean newValueFlag = false;
+
+        public string PrintDetectedCharacter(string sign)
+        {
+            string forReturn = "";
+            if (sign == "+") forReturn += "распознано сложение";
+            else if (sign == "-") forReturn += "распознано вычитание";
+            else if (sign == "*") forReturn += "распознано умножение";
+            else if (sign == "[") forReturn += "распознано [";
+            else if (sign == "]") forReturn += "распознано ]";
+            else if (sign == "(") forReturn += "распознано (";
+            else if (sign == ")") forReturn += "распознано )";
+            else if (sign == "{") forReturn += "распознано {";
+            else if (sign == "}") forReturn += "распознано }";
+            else if (sign == "=") forReturn += "распознано =";
+            else if (sign == "|") forReturn += "распознано |";
+            else if (sign == "^") forReturn += "распознано ^";
+            //if (inputStr[pos] == ';') output += "распознано ;";
+            else if (sign == "\n") forReturn += "распознано enter";
+            else if (sign == "input") { forReturn += "\nРаспознано служебное слово input"; }
+            else if (sign == "output") { forReturn += "\nРаспознано служебное слово output"; }
+            else if (sign == "if") { forReturn += "\nРаспознано служебное слово if"; }
+            else if (sign == "else") { forReturn += "\nРаспознано служебное слово else"; }
+            else if (sign == "while") { forReturn += "\nРаспознано служебное слово while"; }
+            return forReturn;
+        }
+
+        public Boolean GetConditionForState(char ch, State st)
+        {
+            Boolean condition = false;
+            if(st == State.S)
+            {
+                if((ch == '+' || ch == '-' || ch == '*' || ch == '[' || ch == ']' || ch == '(' || ch == ')'
+                        || ch == '{' || ch == '}' || ch == '=' || ch == '|') || ch == '^' || ch == ';' || ch == '\n') 
+                { condition = true; }
+            }
+            if(st == State.I)
+            {
+                if(ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '[' || ch == ']'
+                         || ch == ':' || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ' '
+                        || ch == '>' || ch == '<' || ch == '=' || ch == '!'
+                        || ch == '|' || ch == '^')
+                { condition = true; }
+            }
+            if(st == State.C)
+            {
+                if(ch == '+' || ch == '-' || ch == '*' || ch == '/' ||
+                        ch == ']' || ch == ')' || ch == '}' || ch == ' '
+                        || ch == '>' || ch == '<' || ch == '=' || ch == '!'
+                        || ch == '|' || ch == '^')
+                { condition = true; }
+            }
+            if(st == State.E)
+            {
+                if(ch == '+' || ch == '-' || ch == '*' || ch == '/' ||
+                         ch == ')'
+                        || ch == '}' || ch == ' '
+                        || ch == '>' || ch == '<' || ch == '=' || ch == '!'
+                        || ch == '|' || ch == '^')
+                { condition = true; }
+            }
+            if(st == State.R)
+            {
+                if(ch == '+' || ch == '.' || ch == '*' || ch == '/' || ch == '[' || ch == ']'
+                         || ch == ':' || ch == ')'
+                        || ch == '{' || ch == '}'
+                        || ch == '>' || ch == '<' || ch == '!'
+                        || ch == '|' || ch == '^' || ch == ';' || ch == '\n')
+                { condition = true; }
+            }
+            return condition;
+        }
+
         public string scanLex(string inputStr, int pos) 
         {
             string output = ""; 
@@ -82,15 +156,26 @@ namespace lexAnalyzerForms
                             wordsCounter += 1;
                             LexemStorage[wordsCounter - 1].addType("decimal");
                         }
+                        else if (tempForWords == "input" || tempForWords == "output"
+                            || tempForWords == "if" || tempForWords == "else"
+                            || tempForWords == "while")
+                        {
+                            PrintDetectedCharacter(tempForWords);
+                        }
                         else
                         {
-                            if (LexemStorage[wordsCounter - 1].Type == "int" || LexemStorage[wordsCounter - 1].Type == "decimal")
+                            if (wordsCounter > 0)
                             {
-                                LexemStorage[wordsCounter - 1].addName(tempForWords);
+                                if (LexemStorage[wordsCounter - 1].Type == "int" || LexemStorage[wordsCounter - 1].Type == "decimal")
+                                {
+                                    LexemStorage[wordsCounter - 1].addName(tempForWords);
+                                }
                             }
                         }
-                        tempForWords = ""; tempForWordsFlag = false;
+                        tempForWords = ""; tempForWordsFlag = false; 
                     }
+
+
                     if (inputStr[pos] >= 'a' && inputStr[pos] <= 'z')
                     {
                         output = inputStr[pos].ToString();
@@ -103,24 +188,10 @@ namespace lexAnalyzerForms
                         //output += inputStr[pos].ToString();
                         currentState = State.C;
                     }
-                    else if ((inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '[' || inputStr[pos] == ']' || inputStr[pos] == '(' || inputStr[pos] == ')'
-                        || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == '=' || inputStr[pos] == '|') || inputStr[pos] == '^' || inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    else if (GetConditionForState(inputStr[pos], State.S))
                     {
                         output += '\n';
-                        if (inputStr[pos] == '+') output += "распознано сложение";
-                        if (inputStr[pos] == '-') output += "распознано вычитание";
-                        if (inputStr[pos] == '*') output += "распознано умножение";
-                        if (inputStr[pos] == '[') output += "распознано [";
-                        if (inputStr[pos] == ']') output += "распознано ]";
-                        if (inputStr[pos] == '(') output += "распознано (";
-                        if (inputStr[pos] == ')') output += "распознано )";
-                        if (inputStr[pos] == '{') output += "распознано {";
-                        if (inputStr[pos] == '}') output += "распознано }";
-                        if (inputStr[pos] == '=') output += "распознано =";
-                        if (inputStr[pos] == '|') output += "распознано |";
-                        if (inputStr[pos] == '^') output += "распознано ^";
-                        if (inputStr[pos] == ';') output += "распознано ;";
-                        if (inputStr[pos] == '\n') output += "распознано enter";
+                        output += PrintDetectedCharacter(inputStr[pos].ToString());
                         currentState = State.F;
                     }
                     else if (inputStr[pos] == '<')
@@ -177,15 +248,19 @@ namespace lexAnalyzerForms
                         output += inputStr[pos].ToString();
                         tempForWords += inputStr[pos].ToString();
                     }
-                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']'
-                         || inputStr[pos] == ':' || inputStr[pos] == '(' || inputStr[pos] == ')'
-                        || inputStr[pos] == '{' || inputStr[pos] == '}' || inputStr[pos] == ' '
-                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
-                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    else if (GetConditionForState(inputStr[pos], State.I))
                     {
                         pos = pos - 1;
                         currentState = State.F;
-                        tempForWordsFlag = true; LexemStorage.Add(new Lexems()); 
+                        tempForWordsFlag = true;
+                        if (newValueFlag == false)
+                        {
+                            if (tempForWords == "int" || tempForWords == "decimal")
+                            {
+                                LexemStorage.Add(new Lexems());
+                                newValueFlag = true;
+                            }
+                        }
                         //output += inputStr[pos].ToString();
                         output += "\nРаспознан знак или служебное слово";
                     }
@@ -210,24 +285,29 @@ namespace lexAnalyzerForms
                         output += inputStr[pos].ToString();
                         tempForWords += inputStr[pos].ToString();
                     }
-                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
-                        inputStr[pos] == ']' || inputStr[pos] == ')'
-                        || inputStr[pos] == '}' || inputStr[pos] == ' '
-                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
-                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    else if (GetConditionForState(inputStr[pos], State.C))
                     {
                         pos = pos - 1;
                         currentState = State.F;
-                        if(LexemStorage[wordsCounter - 1].Name != "" )
-                        {
-                            output += "\nAAAAAAAAAAAAA";
-                            LexemStorage[wordsCounter - 1].addValue(tempForWords);
-                        }
+                        
                         output += "\nРаспознано целое число";
                     }
                     else if(inputStr[pos] == ';' || inputStr[pos] == '\n')
                     {
                         currentState = State.F;
+                        int intNum = 0, tens = 10;
+                        for(int i = 0; i < tempForWords.Length; i++) 
+                        {
+                            tens = 1;
+                            for(int j = 0; j < tempForWords.Length - 1 - i; j++)
+                            {
+                                tens *= 10;
+                            }
+                            intNum += (tempForWords[i]-'0')*tens;
+                        }
+                        LexemStorage[wordsCounter - 1].addValue(intNum);
+                        intNum = 0;
+                        newValueFlag = false;
                         output += "\nРаспознано целое число";
                     }
                     else if (inputStr[pos] == '.') 
@@ -237,7 +317,6 @@ namespace lexAnalyzerForms
                     }
 
                 }
-
 
                 //DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
                 if (currentState == State.D)
@@ -249,6 +328,18 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
+                        double tens = 1.0;
+                        for (int i = 0; i < tempForWords.Length; i++)
+                        {
+                            tens = 1;
+                            for (int j = 0; j < tempForWords.Length - 1 - i; j++)
+                            {
+                                tens *= 10;
+                            }
+                            intBeforeDotNum += (double)(tempForWords[i] - '0') * (double)tens;
+                        }
+
+
                         output += '.';
                         currentState = State.E;
                     }
@@ -269,14 +360,12 @@ namespace lexAnalyzerForms
                     }
                     else if (inputStr[pos] >= '0' && inputStr[pos] <= '9')
                     {
+                        iterDouble += 1;
+                        intBeforeDotNum += (double)(inputStr[pos] - '0') * Math.Pow(0.1, iterDouble);
                         output += inputStr[pos].ToString();
-                        string a = "5";
+                        tempForDecWords += inputStr[pos].ToString();
                     }
-                    else if (inputStr[pos] == '+' || inputStr[pos] == '-' || inputStr[pos] == '*' || inputStr[pos] == '/' ||
-                         inputStr[pos] == ')'
-                        || inputStr[pos] == '}' || inputStr[pos] == ' '
-                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '=' || inputStr[pos] == '!'
-                        || inputStr[pos] == '|' || inputStr[pos] == '^')
+                    else if (GetConditionForState(inputStr[pos], State.E))
                     {
                         pos = pos - 1;
                         currentState = State.F;
@@ -285,6 +374,9 @@ namespace lexAnalyzerForms
                     else if (inputStr[pos] == ';' || inputStr[pos] == '\n')
                     {
                         output += "\nРаспознано вещественное число";
+                        tempForDecWords += inputStr[pos].ToString();
+                        LexemStorage[wordsCounter - 1].addValue(intBeforeDotNum);
+                        intBeforeDotNum = 0.0; iterDouble = 0;
                         currentState = State.F;
                     }
                 }
@@ -306,11 +398,7 @@ namespace lexAnalyzerForms
                         currentState = State.F;
                         output += "\nРаспознан строгий знак сравнени <= или >=";
                     }
-                    else if (inputStr[pos] == '+' || inputStr[pos] == '.' || inputStr[pos] == '*' || inputStr[pos] == '/' || inputStr[pos] == '[' || inputStr[pos] == ']'
-                         || inputStr[pos] == ':' || inputStr[pos] == ')'
-                        || inputStr[pos] == '{' || inputStr[pos] == '}' 
-                        || inputStr[pos] == '>' || inputStr[pos] == '<' || inputStr[pos] == '!'
-                        || inputStr[pos] == '|' || inputStr[pos] == '^' || inputStr[pos] == ';' || inputStr[pos] == '\n')
+                    else if (GetConditionForState(inputStr[pos], State.R))
                     {
                         currentState = State.F;
                         output += "\nОшибка";
@@ -409,6 +497,7 @@ namespace lexAnalyzerForms
 
                 if (inputStr[pos] == ';')
                 {
+                    output += "\nРаспознан знак ;";
                     currentState = State.F;
                 }
                 if(currentState == State.F) { break; }
@@ -420,10 +509,13 @@ namespace lexAnalyzerForms
             position = pos;
             return output;
         }
+        
+        
         public static int position = 0;
         public List<Lexems> LexemStorage = new List<Lexems>();
         private void button1_Click(object sender, EventArgs e)
         {
+            LexemStorage.Clear();
             position = 0;
             inputText = tbInput.Text;
             while (position != inputText.Length - 1)
@@ -433,7 +525,7 @@ namespace lexAnalyzerForms
                     position = position + 1;
             }
             tbOutput.Text += "\nСПИСОК ПЕРЕМЕННЫХ";
-            for (int i = 0; i < LexemStorage.Count-1; i++)
+            for (int i = 0; i < LexemStorage.Count; i++)
             {
                 tbOutput.Text += "\n" + LexemStorage[i].Type + " " + LexemStorage[i].Name + " = " + LexemStorage[i].Value;
             }
