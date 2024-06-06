@@ -50,7 +50,7 @@ namespace lexAnalyzerForms
                 Value = "";
             }
         }
-
+        
         public enum State
         {
             S, I, C, D, E,
@@ -62,9 +62,12 @@ namespace lexAnalyzerForms
         double intBeforeDotNum = 0.0;
         int iterDouble = 0;
 
-        string tempForWords = "", tempForDecWords = ""; Boolean tempForWordsFlag = false; int wordsCounter = 0;
+        //string tempForWords = ""; 
+        string tempForDecWords = ""; Boolean tempForWordsFlag = false; int wordsCounter = 0;
         Boolean newValueFlag = false;
         public List<string> KeywordsList = new List<string> { "if", "else", "while", "arr", "input", "output" };
+        private string name;
+        int chislo;
 
         public bool IsKeyword(string word)
         {
@@ -151,15 +154,18 @@ namespace lexAnalyzerForms
             }
             return condition;
         }
-
-        public string scanLex(int pos) 
+        int pos;
+        public string scanLex(int poss) 
         {
-            string output = ""; 
+            string output = "";
+            name = "";
             State currentState = State.S;
             while (true)
             {
+                
                 if (currentState == State.S)
                 {
+                    /*
                     if(tempForWords != "" && tempForWordsFlag == true)
                     {
                         if(tempForWords == "int")
@@ -188,25 +194,34 @@ namespace lexAnalyzerForms
                         }
                         tempForWords = ""; tempForWordsFlag = false; 
                     }
-
+                    */
 
                     if (IsLetter(inputText[pos]))
                     {
-                        output = inputText[pos].ToString();
-                        tempForWords = inputText[pos].ToString();
+                        name = inputText[pos].ToString();
+                        //output = inputText[pos].ToString();
+                        //tempForWords = inputText[pos].ToString();
                         currentState = State.I;
-                        pos = pos + 1;
+                        pos = pos + 1; // точно ли позиция тут меняется?
                     }
                     else if (IsNumber(inputText[pos]))
                     {
                         //output += inputText[pos].ToString();
                         currentState = State.C;
+                        chislo = inputText[pos] - '0';
+                        pos = pos + 1;
                     }
                     else if (GetConditionForState(inputText[pos], State.S))
                     {
-                        output += '\n';
+                        // output += '\n';
                         output += PrintDetectedCharacter(inputText[pos].ToString());
                         currentState = State.F;
+                        pos = pos + 1;
+                    }
+                    else if (inputText[pos] == ' ')
+                    {
+                        currentState = State.S;
+                        pos = pos + 1;
                     }
                     else if (inputText[pos] == '<')
                     {
@@ -241,8 +256,10 @@ namespace lexAnalyzerForms
                 }
 
                 if (currentState == State.I) {
-                    if (IsLetter(inputText[pos]))
+                    // здесь из намбер в общий иф
+                    if (IsLetter(inputText[pos]) || IsNumber(inputText[pos]))
                     {
+                        name += inputText[pos];
                         /*if (inputText.Length - 1-pos > 1)
                         {
                             if ((inputText[pos-1] == 'i') && (inputText[pos] == 'n') 
@@ -252,37 +269,49 @@ namespace lexAnalyzerForms
                                 pos += 2;
                             }
                         }*/
-                        output += inputText[pos].ToString();
-                        tempForWords += inputText[pos].ToString();
+                        //output += inputText[pos].ToString();
+                        //tempForWords += inputText[pos].ToString();
                         //currentState = State.I;
                         //pos = pos + 1;
                     }
+                    /*
                     else if (IsNumber(inputText[pos]))
                     {
                         output += inputText[pos].ToString();
-                        tempForWords += inputText[pos].ToString();
-                    }
+                        //tempForWords += inputText[pos].ToString();
+                    }*/
                     else if (GetConditionForState(inputText[pos], State.I))
                     {
-                        pos = pos - 1;
+                        //pos = pos - 1;
                         currentState = State.F;
-                        tempForWordsFlag = true;
-                        if (newValueFlag == false)
-                        {
-                            if (tempForWords == "int" || tempForWords == "decimal")
-                            {
-                                LexemStorage.Add(new Lexems());
-                                newValueFlag = true;
-                            }
-                        }
+                        //tempForWordsFlag = true;
+                        //if (newValueFlag == false)
+                        //{
+                        //    /*if (tempForWords == "int" || tempForWords == "decimal")
+                        //    {
+                        //        LexemStorage.Add(new Lexems());
+                        //        newValueFlag = true;
+                        //    }*/
+                        //}
                         //output += inputText[pos].ToString();
-                        output += "\nРаспознан знак или служебное слово";
+                        output += name;
+                        output += "Распознан знак или служебное слово";
                     }
-                    else if (inputText[pos] == '.') { currentState = State.F; output += "\nОшибка"; }
-                    else if (inputText[pos] != ';')
+                    //else if (inputText[pos] == '.') 
+                    //{ 
+                    //    currentState = State.F; 
+                    //    output += "\nОшибка"; 
+                    //}
+                    else if (inputText[pos] == ';' || inputText[pos] == '\n')
+                    {
+                        //pos = pos - 1;
+                        currentState = State.F;
+                        output += "Распознан знак или служебное слово";
+                    }
+                    else
                     {
                         currentState = State.F;
-                        output += "\nОшибка";
+                        output += "\nошибка";
                     }
                 }
 
@@ -296,21 +325,22 @@ namespace lexAnalyzerForms
                     }
                     else if (IsNumber(inputText[pos]))
                     {
-                        output += inputText[pos].ToString();
-                        tempForWords += inputText[pos].ToString();
+                        chislo += inputText[pos] - '0';
+                        //output += inputText[pos].ToString();
+                        //tempForWords += inputText[pos].ToString();
                     }
                     else if (GetConditionForState(inputText[pos], State.C))
                     {
                         pos = pos - 1;
                         currentState = State.F;
-                        
+                        output += chislo.ToString();
                         output += "\nРаспознано целое число";
                     }
                     else if(inputText[pos] == ';' || inputText[pos] == '\n')
                     {
                         currentState = State.F;
                         int intNum = 0, tens = 10;
-                        for(int i = 0; i < tempForWords.Length; i++) 
+                        /*for(int i = 0; i < tempForWords.Length; i++) 
                         {
                             tens = 1;
                             for(int j = 0; j < tempForWords.Length - 1 - i; j++)
@@ -318,10 +348,11 @@ namespace lexAnalyzerForms
                                 tens *= 10;
                             }
                             intNum += (tempForWords[i]-'0')*tens;
-                        }
-                        LexemStorage[wordsCounter - 1].addValue(intNum);
-                        intNum = 0;
-                        newValueFlag = false;
+                        }*/
+                        //LexemStorage[wordsCounter - 1].addValue(intNum);
+                        //intNum = 0;
+                        //newValueFlag = false;
+                        output += chislo.ToString();
                         output += "\nРаспознано целое число";
                     }
                     else if (inputText[pos] == '.') 
@@ -343,7 +374,7 @@ namespace lexAnalyzerForms
                     else if (IsNumber(inputText[pos]))
                     {
                         double tens = 1.0;
-                        for (int i = 0; i < tempForWords.Length; i++)
+                        /*for (int i = 0; i < tempForWords.Length; i++)
                         {
                             tens = 1;
                             for (int j = 0; j < tempForWords.Length - 1 - i; j++)
@@ -351,7 +382,7 @@ namespace lexAnalyzerForms
                                 tens *= 10;
                             }
                             intBeforeDotNum += (double)(tempForWords[i] - '0') * (double)tens;
-                        }
+                        }*/
 
 
                         output += '.';
@@ -525,23 +556,25 @@ namespace lexAnalyzerForms
         
         public static int position = 0;
         public List<Lexems> LexemStorage = new List<Lexems>();
+
         private void button1_Click(object sender, EventArgs e)
         {
             LexemStorage.Clear();
-            position = 0;
+            //position = 0;
+            pos = 0;
             inputText = tbInput.Text;
             //for (int i = 0; i < tbInput.TextLength; i++)
-            while (position != inputText.Length - 2)
+            while (pos < inputText.Length - 2)
             {
-                tbOutput.Text += scanLex(position) + "    position: " + position.ToString() + '\n';
-                if(position < inputText.Length - 1)
-                    position = position + 1;
+                tbOutput.Text += scanLex(pos) + "    position: " + pos.ToString() + '\n';
+                //if(position < inputText.Length - 1)
+                    //position = position + 1;
             }
-            tbOutput.Text += "\nСПИСОК ПЕРЕМЕННЫХ";
+            /*tbOutput.Text += "\nСПИСОК ПЕРЕМЕННЫХ";
             for (int i = 0; i < LexemStorage.Count; i++)
             {
                 tbOutput.Text += "\n" + LexemStorage[i].Type + " " + LexemStorage[i].Name + " = " + LexemStorage[i].Value;
-            }
+            }*/
         }
     }
 }
